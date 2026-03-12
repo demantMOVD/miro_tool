@@ -50,7 +50,11 @@ def _gist_load(token: str, gist_id: str) -> dict:
     """Fetch the JSON content of the Gist."""
     headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github+json"}
     r = requests.get(f"https://api.github.com/gists/{gist_id}", headers=headers, timeout=10)
-    r.raise_for_status()
+    if not r.ok:
+        raise requests.exceptions.HTTPError(
+            f"GitHub Gist GET failed [{r.status_code}]: {r.text}",
+            response=r,
+        )
     files = r.json().get("files", {})
     if GIST_FILENAME not in files:
         # File doesn't exist in gist yet — return empty so it gets initialised
@@ -68,7 +72,11 @@ def _gist_save(token: str, gist_id: str, data: dict):
     payload = {"files": {GIST_FILENAME: {"content": json.dumps(data, indent=2, ensure_ascii=False)}}}
     r = requests.patch(f"https://api.github.com/gists/{gist_id}", headers=headers,
                        json=payload, timeout=10)
-    r.raise_for_status()
+    if not r.ok:
+        raise requests.exceptions.HTTPError(
+            f"GitHub Gist PATCH failed [{r.status_code}]: {r.text}",
+            response=r,
+        )
 
 
 def _local_load() -> dict:
@@ -148,6 +156,7 @@ def save_full(data: dict):
         token, gist_id = cfg
         _gist_save(token, gist_id, data)
     else:
+        from filelock import FileLock
         with FileLock(LOCK_FILE, timeout=5):
             with open(DATA_FILE, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)

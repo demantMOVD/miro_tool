@@ -211,22 +211,41 @@ with st.sidebar:
     st.markdown("## 🗓 Timeline Config")
     st.divider()
 
-    data["project_name"] = st.text_input("Project Name", value=data["project_name"])
-    data["team_name"]    = st.text_input("Team Name",    value=data["team_name"])
+    def _save_config():
+        # on_change fires after session_state is updated — read new values from there
+        data["project_name"]   = st.session_state.cfg_project_name
+        data["team_name"]      = st.session_state.cfg_team_name
+        data["start_date"]     = st.session_state.cfg_start_date
+        data["num_iterations"] = st.session_state.cfg_num_iterations
+        members_raw = st.session_state.get("cfg_members", "\n".join(data["members"]))
+        new_m = [m.strip() for m in members_raw.splitlines() if m.strip()]
+        if new_m:
+            data["members"] = new_m
+        save_full(data)
+        st.session_state.data = data
+
+    data["project_name"] = st.text_input("Project Name", value=data["project_name"],
+                                          on_change=_save_config, key="cfg_project_name")
+    data["team_name"]    = st.text_input("Team Name",    value=data["team_name"],
+                                          on_change=_save_config, key="cfg_team_name")
 
     st.markdown("**Timeline Span**")
     c1, c2 = st.columns(2)
     with c1:
-        data["start_date"] = st.text_input("Start date (YYYY-MM-DD)", value=data["start_date"])
+        data["start_date"] = st.text_input("Start date (YYYY-MM-DD)", value=data["start_date"],
+                                            on_change=_save_config, key="cfg_start_date")
     with c2:
         data["num_iterations"] = st.number_input("Number of iterations", min_value=1, max_value=52,
-                                                  value=data["num_iterations"], step=1)
+                                                  value=data["num_iterations"], step=1,
+                                                  on_change=_save_config, key="cfg_num_iterations")
 
     st.markdown("**Team Members**")
     raw = st.text_area(
         "One name per line",
         value="\n".join(data["members"]),
         height=130,
+        on_change=_save_config,
+        key="cfg_members",
     )
     new_members = [m.strip() for m in raw.splitlines() if m.strip()]
     if new_members != data["members"]:
