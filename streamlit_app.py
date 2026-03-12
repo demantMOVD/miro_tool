@@ -3,6 +3,7 @@ Team Timeline – Streamlit App
 Run with:  streamlit run app.py
 """
 import io
+import os
 import streamlit as st
 from data import (
     load, save_full, get_iterations, get_task, set_task,
@@ -120,6 +121,32 @@ if "data" not in st.session_state:
 
 if "edit" not in st.session_state:
     st.session_state.edit = None
+
+# ── Check secrets are configured when running on Streamlit Cloud ──────────
+_on_cloud = os.environ.get("STREAMLIT_SHARING_MODE") or os.environ.get("IS_STREAMLIT_CLOUD")
+_has_local_file = os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "timeline_data.json"))
+_has_secrets = False
+try:
+    _has_secrets = bool(st.secrets.get("gist", {}).get("token"))
+except Exception:
+    pass
+
+if not _has_secrets and not _has_local_file:
+    st.error("⚠️ **No data storage configured.**")
+    st.markdown("""
+The app needs either:
+
+**On Streamlit Cloud** — add these secrets in your app's **Settings → Secrets**:
+```toml
+[gist]
+token   = "your_github_pat_with_gist_scope"
+gist_id = "your_gist_id"
+```
+
+**Running locally** — create `.streamlit/secrets.toml` with the same content,
+or just run the app once and a local `timeline_data.json` will be created automatically.
+    """)
+    st.stop()
 
 # Re-read from disk on every render UNLESS we are processing a form submission
 if st.session_state.get("_form_submitting", False):

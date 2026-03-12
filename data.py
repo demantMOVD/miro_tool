@@ -51,7 +51,13 @@ def _gist_load(token: str, gist_id: str) -> dict:
     headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github+json"}
     r = requests.get(f"https://api.github.com/gists/{gist_id}", headers=headers, timeout=10)
     r.raise_for_status()
-    content = r.json()["files"][GIST_FILENAME]["content"]
+    files = r.json().get("files", {})
+    if GIST_FILENAME not in files:
+        # File doesn't exist in gist yet — return empty so it gets initialised
+        return {}
+    content = files[GIST_FILENAME]["content"]
+    if not content or not content.strip():
+        return {}
     return json.loads(content)
 
 
