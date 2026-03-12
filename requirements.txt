@@ -1,1 +1,6 @@
 streamlit
+filelock
+openpyxl
+pandas
+requests
+
