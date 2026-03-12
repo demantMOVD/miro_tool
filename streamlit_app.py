@@ -137,10 +137,11 @@ if not _has_secrets and not _has_local_file:
 The app needs either:
 
 **On Streamlit Cloud** — add these secrets in your app's **Settings → Secrets**:
-```toml
+
+```
 [gist]
-token   = "your_github_pat_with_gist_scope"
-gist_id = "your_gist_id"
+token   = "<your GitHub PAT with gist scope>"
+gist_id = "<your Gist ID>"
 ```
 
 **Running locally** — create `.streamlit/secrets.toml` with the same content,
